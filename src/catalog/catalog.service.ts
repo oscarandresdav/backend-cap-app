@@ -1,40 +1,46 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 import { Catalog } from './entities/catalog.entity';
 
 @Injectable()
 export class CatalogService {
-  private catalog: Catalog[] = [
-    {
-      id: 1,
-      name: 'Gorra plana',
-      price: 5,
-      quantity: 200,
-    },
-  ];
-
+  constructor(
+    @InjectRepository(Catalog)
+    private readonly catalogRepository: Repository<Catalog>,
+  ) {}
   findAll() {
-    return this.catalog;
+    return this.catalogRepository.find();
   }
 
-  findOne(id: string) {
-    return this.catalog.find(item => item.id === +id);
-  }
-
-  create(createCatalogDto: any) {
-    this.catalog.push(createCatalogDto);
-  }
-
-  update(id: string, updateCatalogDto: any) {
-    const existingCatalog = this.findOne(id);
-    if (existingCatalog) {
-      // update the existing entity
+  async findOne(id: string) {
+    const product = await this.catalogRepository.findOne(id);
+    if (!product) {
+      throw new NotFoundException(`Product #${id} not found`);
     }
+    return product;
   }
 
-  remove(id: string) {
-    const CatalogIndex = this.catalog.findIndex(item => item.id === +id);
-    if (CatalogIndex >= 0) {
-      this.catalog.splice(CatalogIndex, 1);
+  create(createProductDto: CreateProductDto) {
+    const product = this.catalogRepository.create(createProductDto);
+    return this.catalogRepository.save(product);
+  }
+
+  async update(id: string, updateProductDto: UpdateProductDto) {
+    const product = await this.catalogRepository.preload({
+      id: +id,
+      ...updateProductDto,
+    });
+    if (!product) {
+      throw new NotFoundException(`Product #${id} not found`);
     }
+    return this.catalogRepository.save(product);
+  }
+
+  async remove(id: string) {
+    const product = await this.findOne(id);
+    return this.catalogRepository.remove(product);
   }
 }
