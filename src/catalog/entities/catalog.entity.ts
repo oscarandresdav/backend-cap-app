@@ -12,23 +12,26 @@ export class Catalog {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ unique: true })
   name: string;
 
   @Column({ type: 'text', nullable: true })
   detail: string;
 
-  @Column()
-  stock: number;
+  @Column({ default: 0 })
+  stock_office: number;
 
   @Column({ default: 0 })
-  minimum_stock_level: number;
+  stock_warehouse: number;
 
   @Column({ type: 'decimal', precision: 12, scale: 4 })
   cost: number;
 
   @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
   price: number;
+
+  @Column({ nullable: true })
+  image: string;
 
   @CreateDateColumn()
   created_at: Date;
